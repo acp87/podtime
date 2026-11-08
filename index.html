@@ -365,16 +365,17 @@
   }
 
   // ---------- selection logic ----------
-  // Una puntata iniziata di cui resta pochissimo è quasi sempre stata
-  // interrotta sui titoli di coda o sulle pubblicità finali: la consideriamo
-  // finita. Soglia = 10% della durata, minimo 1 min, massimo 4 min
-  // (puntata da 8 min → 1 min; da 25 min → 2,5 min; da 40 min in su → 4 min).
+  // Una puntata iniziata di cui mancano meno di 4 minuti è quasi sempre stata
+  // interrotta sui titoli di coda: non la proponiamo. Eccezione: le puntate
+  // brevi (10 minuti o meno in tutto), dove anche gli ultimi minuti contano.
+  const SHORT_EPISODE = 10 * 60;
+  const END_SKIP = 4 * 60;
   function endThreshold(durationSec) {
-    return Math.min(240, Math.max(60, durationSec * 0.1));
+    return durationSec <= SHORT_EPISODE ? 0 : END_SKIP;
   }
   function isPracticallyDone(e) {
     if (e.position <= 0) return false; // mai iniziata: sempre valida
-    return (e.duration - e.position) <= endThreshold(e.duration);
+    return (e.duration - e.position) < endThreshold(e.duration);
   }
   function candidates(lib) {
     const excluded = new Set(settings.excluded);
