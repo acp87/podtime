@@ -365,11 +365,22 @@
   }
 
   // ---------- selection logic ----------
+  // Una puntata iniziata di cui resta pochissimo è quasi sempre stata
+  // interrotta sui titoli di coda o sulle pubblicità finali: la consideriamo
+  // finita. Soglia = 10% della durata, minimo 1 min, massimo 4 min
+  // (puntata da 8 min → 1 min; da 25 min → 2,5 min; da 40 min in su → 4 min).
+  function endThreshold(durationSec) {
+    return Math.min(240, Math.max(60, durationSec * 0.1));
+  }
+  function isPracticallyDone(e) {
+    if (e.position <= 0) return false; // mai iniziata: sempre valida
+    return (e.duration - e.position) <= endThreshold(e.duration);
+  }
   function candidates(lib) {
     const excluded = new Set(settings.excluded);
     const now = Date.now();
     return lib.episodes
-      .filter(e => !excluded.has(e.showId) && !e.played)
+      .filter(e => !excluded.has(e.showId) && !e.played && !isPracticallyDone(e))
       .map(e => {
         const remaining = Math.max(0, e.duration - e.position);
         const ageDays = e.released ? (now - new Date(e.released).getTime()) / 86400000 : 999;
